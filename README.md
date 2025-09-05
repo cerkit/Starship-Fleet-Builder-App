@@ -10,3 +10,5 @@ Because it's a single file, it also runs locally in Safari and Edge.
 
 ## Call for help
 If you have any new ideas on how to make this app better, please feel free to submit pull requests.
+
+### You can reach me at <a href="mailto:fleet-builder@cerkit.com">fleet-buiilder@cerkit.com</a>
