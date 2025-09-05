@@ -586,6 +586,19 @@
           });
           return () => Number(input.value || 0);
         }
+
+        function csvEscape(val) {
+          const s = String(val ?? '');
+          // Quote if contains comma, quote, or newline
+          if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+          return s;
+        }
+        function slugifyName(raw) {
+          const base = raw && raw.trim() !== "" ? raw : "unnamed-fleet";
+          return base.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || "unnamed-fleet";
+        }
+
+
         const getA = wireStepper('drone-a');
         const getB = wireStepper('drone-b');
         const getC = wireStepper('drone-c');
@@ -702,6 +715,34 @@
           };
           rr.readAsText(f);
           e.target.value = '';
+        });
+        // Export CSV (matches print columns: #, Name, Qty, Row Points)
+        // Last row: Total, , <count of rows>, <total points>
+        $('#export-csv', app).addEventListener('click', () => {
+          const rows = [];
+          rows.push(['#', 'Name', 'Qty', 'Row Points']); // header
+
+          let totalPoints = 0;
+          state.fleet.forEach((item, idx) => {
+            const qty = item.qty || 1;
+            const rowPts = qty * (item.pointsEach || 0);
+            totalPoints += rowPts;
+            rows.push([`Ship ${idx + 1}`, item.label, String(qty), `${rowPts} points`]);
+          });
+
+          // count of rows (not sum of qty) to match the print layout you asked for
+          rows.push(['Total', '', String(state.fleet.length), `${totalPoints} points`]);
+
+          const csv = rows.map(r => r.map(csvEscape).join(',')).join('\r\n');
+          const filename = `${slugifyName(state.name || '')}.csv`;
+
+          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          a.click();
+          URL.revokeObjectURL(url);
         });
 
 
@@ -836,6 +877,11 @@
         // Totals (count of rows like the template, not sum of quantities)
         document.getElementById('print-total-count').textContent = String(state.fleet.length);
         document.getElementById('print-total-points').textContent = `${totalPoints} points`;
+        // Footer: Date/Time and cerkit.com
+        const pf = document.getElementById('print-footer');
+        const when = new Date().toLocaleString();
+        pf.textContent = `Printed on ${when} — cerkit.com`;
+
       }
     })();
   </script>
