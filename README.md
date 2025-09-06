@@ -1,5 +1,5 @@
 # Overview
-I recently found a new Starship Combat game made by Fat Dragon Games<sup>TM</sup>. I couldn't find a utility that let me generate and print a fleet list. 
+I recently found a new 3D-Printable (FDM) Tabletop Starship Combat game. I couldn't find a utility that let me generate and print a fleet list. 
 I needed someting that would list the ships, allow me to add them to my fleet list, and keep a running total of my ships. 
 It also had to have the ability to save a fleet to disk (along with its name) and allow for later importing. Printing was a priority too; I wanted
 to be able to print the fleet list so I could easily build it at the gaming table. For completion sake, I also needed a CSV export.
