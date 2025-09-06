@@ -38,7 +38,7 @@
     #bfv-app .stepper button:hover{ background:#121623 }
     #bfv-app .stepper input{ width:64px; background:#05060a; color:#fff; border:0; text-align:center; padding:7px 6px; outline:none }
     #bfv-app .fleet-total{ display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--edge); padding-top:12px; margin-top:12px }
-    #bfv-app .total{ font-size:24px; font-weight:900; color:var(--sky-1) }
+    #bfv-app .total{ font-size:24px; font-weight:900; color:#sky-1 }
     #bfv-app footer{ margin-top:2rem; text-align:center; font-size:0.8rem; color:var(--muted); }
     #bfv-app footer a{ color:var(--sky-2); text-decoration:none; }
     #bfv-app footer a:hover{ text-shadow:0 0 8px var(--sky-3); }
@@ -82,7 +82,7 @@
       </header>
 
       <div class="grid">
-        <!-- Catalog -->
+        <!-- Catalog (grouped by faction) -->
         <section class="panel">
           <div class="row" style="margin-bottom:8px">
             <h2>Ship Catalog</h2>
@@ -137,15 +137,21 @@
           <div class="row" style="margin-bottom:8px">
             <h2>Your Fleet</h2>
             <div class="spacer"></div>
+
             <label class="btn grey" style="position:relative; overflow:hidden">
               Import
               <input type="file" id="import" accept="application/json" style="position:absolute; inset:0; opacity:0; cursor:pointer" />
             </label>
+
+            <!-- Guide Button -->
+            <button class="btn grey" id="open-guide">Guide</button>
+
             <button class="btn" id="export">Export</button>
             <button class="btn grey" id="export-csv">Export CSV</button>
             <button class="btn grey" id="print">Print</button>
             <button class="btn grey" id="clear">Clear</button>
           </div>
+
           <div class="item" style="margin-bottom:10px">
             <div><div class="name">Mines</div><div class="sub">4 mines per pack • 5 pts per pack</div></div>
             <div class="row">
@@ -155,6 +161,7 @@
               <button class="btn" id="add-mines">Add Packs</button>
             </div>
           </div>
+
           <ul class="list" id="fleet-list" aria-live="polite"></ul>
           <div class="fleet-total">
             <div class="small">Drag-select to copy. Exports include quantities and points.</div>
@@ -197,21 +204,37 @@
 
   <script>
   (function(){
-    const app = document.getElementById('bfv-app'); // critical for all scoped queries
+    const app = document.getElementById('bfv-app'); // scoped root
 
     const SHIPS = [
-      // Humanoid
-      { id: "humanoid-s4a-scout", faction: "Humanoid", code: "S-4A", name: "Scout", points: 115 },
-      { id: "humanoid-c6a-cruiser", faction: "Humanoid", code: "C-6A", name: "Heavy Cruiser", points: 280 },
-      { id: "humanoid-d3a-destroyer", faction: "Humanoid", code: "D-3A", name: "Destroyer", points: 190 },
+      // Transports
       { id: "humanoid-t2a-transport", faction: "Humanoid", code: "T-2A", name: "Transport", points: 80 },
+      { id: "alien-t1a-transport",    faction: "Alien",    code: "T-1A", name: "Transport", points: 80 },
 
-      // Alien
-      { id: "alien-s3a-scout", faction: "Alien", code: "S-3A", name: "Scout", points: 120 },
-      { id: "alien-c3a-cruiser", faction: "Alien", code: "C-3A", name: "Heavy Cruiser", points: 290 },
-      { id: "alien-d2a-destroyer", faction: "Alien", code: "D-2A", name: "Destroyer", points: 195 },
-      { id: "alien-t1a-transport", faction: "Alien", code: "T-1A", name: "Transport", points: 80 }
+      // Scouts
+      { id: "humanoid-s4a-scout",     faction: "Humanoid", code: "S-4A", name: "Scout",     points: 115 },
+      { id: "alien-s3a-scout",        faction: "Alien",    code: "S-3A", name: "Scout",     points: 120 },
+
+      // Frigates (NEW)
+      { id: "humanoid-f5a-frigate",   faction: "Humanoid", code: "F-5A", name: "Frigate",   points: 155 },
+      { id: "alien-f3a-frigate",      faction: "Alien",    code: "F-3A", name: "Frigate",   points: 155 },
+
+      // Destroyers
+      { id: "humanoid-d3a-destroyer", faction: "Humanoid", code: "D-3A", name: "Destroyer", points: 190 },
+      { id: "alien-d2a-destroyer",    faction: "Alien",    code: "D-2A", name: "Destroyer", points: 195 },
+
+      // Light Cruisers (NEW)
+      { id: "humanoid-c5a-light-cruiser", faction: "Humanoid", code: "C-5A", name: "Light Cruiser", points: 255 },
+      { id: "alien-c4a-light-cruiser",    faction: "Alien",    code: "C-4A", name: "Light Cruiser", points: 255 },
+
+      // Heavy Cruisers
+      { id: "humanoid-c6a-cruiser",   faction: "Humanoid", code: "C-6A", name: "Heavy Cruiser", points: 280 },
+      { id: "alien-c3a-cruiser",      faction: "Alien",    code: "C-3A", name: "Heavy Cruiser", points: 290 }
     ];
+
+    // Ensure sorted ascending by points (defensive)
+    SHIPS.sort((a,b) => a.points - b.points);
+
     const DRONE_POINTS = { A: 5, B: 10, C: 15 };
     const MINES_PER_PACK = 4;
     const MINE_PACK_POINTS = 5;
@@ -335,6 +358,11 @@
         renderFleet();
       });
 
+      // Open Guide page
+      $('#open-guide', app).addEventListener('click', () => {
+        window.location.href = '/fleet-builder-guide';
+      });
+
       // Export JSON (filename = slug of fleet name)
       $('#export', app).addEventListener('click', () => {
         const payload = { name: state.name || "", fleet: state.fleet, meta: { exportedAt: new Date().toISOString(), app: 'cerkit.com Space Fleet Builder' } };
@@ -443,21 +471,49 @@
     // -------- Rendering --------
     function renderCatalog(){
       const q = state.query.trim().toLowerCase();
+
+      // Filter by faction and search term
       let rows = SHIPS.filter(s => state.faction === 'All' || s.faction === state.faction);
       if (q) rows = rows.filter(s => (`${s.faction} ${s.code} ${s.name}`).toLowerCase().includes(q));
 
+      // Group by faction
+      const groups = rows.reduce((acc, s) => {
+        (acc[s.faction] ||= []).push(s);
+        return acc;
+      }, {});
+
       catalogList.innerHTML = '';
-      rows.forEach(s => {
-        const li = document.createElement('li');
-        li.className = 'item';
-        li.innerHTML = `
-          <div>
-            <div class="name">${s.faction} ${s.code} <span style="color:#c8cbd2;font-weight:600">${s.name}</span></div>
-            <div class="sub">${s.points} pts</div>
-          </div>
-          <button class="btn" data-add-ship="${s.id}">Add to Fleet</button>
-        `;
-        catalogList.appendChild(li);
+
+      const factionsInOrder = ['Humanoid', 'Alien'].filter(f => groups[f] && groups[f].length) // preferred order
+        .concat(Object.keys(groups).filter(f => !['Humanoid','Alien'].includes(f))); // any others
+
+      if (factionsInOrder.length === 0){
+        const empty = document.createElement('li');
+        empty.className = 'sub';
+        empty.textContent = 'No matching ships.';
+        catalogList.appendChild(empty);
+        return;
+      }
+
+      factionsInOrder.forEach(faction => {
+        // Heading
+        const heading = document.createElement('li');
+        heading.innerHTML = `<h3 style="margin:0.5rem 0; color:#93c5fd; font-size:1rem;">${faction} Ships</h3>`;
+        catalogList.appendChild(heading);
+
+        // Items (already sorted by points due to SHIPS.sort)
+        groups[faction].forEach(s => {
+          const li = document.createElement('li');
+          li.className = 'item';
+          li.innerHTML = `
+            <div>
+              <div class="name">${s.code} <span style="color:#c8cbd2;font-weight:600">${s.name}</span></div>
+              <div class="sub">${s.points} pts</div>
+            </div>
+            <button class="btn" data-add-ship="${s.id}">Add to Fleet</button>
+          `;
+          catalogList.appendChild(li);
+        });
       });
     }
 
