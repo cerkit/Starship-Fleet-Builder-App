@@ -1,111 +1,594 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Space Combat – Fleet Builder</title>
-<style>
-/* --- Styling unchanged from last working version --- */
-/* ... keep your #bfv-app styles, grid, buttons, etc. ... */
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Space Combat – Fleet Builder</title>
+  <style>
+    /* Space theme, fully scoped */
+    #bfv-app{ --bg:#000; --panel:#0b0b10; --panel-2:#0f0f17; --edge:#22242b; --text:#e5e7eb; --muted:#9aa3b2; --sky-1:#8ec5ff; --sky-2:#61a5ff; --sky-3:#2f76ff; --amber:#f1b90b; --amber-2:#ffd062; --danger:#d24b4b; }
+    #bfv-app *{ box-sizing:border-box }
+    #bfv-app{ min-height:100vh; background:var(--bg); color:var(--text); font:14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica,Arial }
+    #bfv-app .bfv-wrap{ max-width:1120px; margin:0 auto; padding:24px 16px 48px; position:relative }
+    #bfv-app h1{ font-size:clamp(24px,2.8vw,36px); margin:0 0 8px; background:linear-gradient(90deg,#bfe0ff,var(--sky-1),var(--sky-2)); -webkit-background-clip:text; background-clip:text; color:transparent; font-weight:900; letter-spacing:.2px }
+    #bfv-app .bfv-sub{ color:var(--muted); margin-bottom:20px }
+    #bfv-app .grid{ display:grid; gap:16px; grid-template-columns:1fr }
+    @media (min-width:1024px){ #bfv-app .grid{ grid-template-columns:1fr 1fr 1fr } }
+    #bfv-app .panel{ background:linear-gradient(180deg,var(--panel),var(--panel-2)); border:1px solid var(--edge); border-radius:16px; padding:16px; box-shadow:0 10px 40px rgba(0,0,0,.4) }
+    #bfv-app .panel h2{ margin:0 0 10px; font-size:16px; color:var(--sky-1) }
+    #bfv-app .row{ display:flex; gap:8px; align-items:center }
+    #bfv-app .row.wrap{ flex-wrap:wrap }
+    #bfv-app .spacer{ flex:1 }
+    #bfv-app .pill{ border:1px solid var(--edge); background:#0c0e14; color:#c7d2fe; padding:6px 10px; border-radius:999px; font-size:12px; cursor:pointer }
+    #bfv-app .pill[aria-pressed="true"]{ background:#0a2748; border-color:#1e4978; color:#d9edff }
+    #bfv-app .search, #bfv-app .text {
+      width:100%; border:1px solid var(--edge); background:#07080c; color:var(--text);
+      border-radius:12px; padding:10px 12px; outline:none;
+    }
+    #bfv-app .search:focus, #bfv-app .text:focus{ border-color:var(--sky-2); box-shadow:0 0 0 2px rgba(97,165,255,.2) }
+    #bfv-app .list{ list-style:none; padding:0; margin:0; display:grid; gap:10px; max-height:26rem; overflow:auto }
+    #bfv-app .item{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px; border:1px solid var(--edge); background:#090a10; border-radius:12px }
+    #bfv-app .name{ font-weight:700; color:#c7e3ff }
+    #bfv-app .sub{ color:var(--muted); font-size:12px }
+    #bfv-app .btn{ appearance:none; border:0; border-radius:12px; padding:8px 12px; font-weight:700; cursor:pointer; background:var(--amber); color:#111; box-shadow:0 8px 20px rgba(241,185,11,.2) }
+    #bfv-app .btn:hover{ background:var(--amber-2) }
+    #bfv-app .btn.grey{ background:#13151b; color:var(--text); border:1px solid var(--edge); box-shadow:none }
+    #bfv-app .stepper{ display:inline-flex; align-items:center; border:1px solid var(--edge); border-radius:12px; overflow:hidden }
+    #bfv-app .stepper button{ background:#0c0e14; color:#fff; border:0; padding:6px 10px; cursor:pointer }
+    #bfv-app .stepper button:hover{ background:#121623 }
+    #bfv-app .stepper input{ width:64px; background:#05060a; color:#fff; border:0; text-align:center; padding:7px 6px; outline:none }
+    #bfv-app .fleet-total{ display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--edge); padding-top:12px; margin-top:12px }
+    #bfv-app .total{ font-size:24px; font-weight:900; color:var(--sky-1) }
+    #bfv-app footer{ margin-top:2rem; text-align:center; font-size:0.8rem; color:var(--muted); }
+    #bfv-app footer a{ color:var(--sky-2); text-decoration:none; }
+    #bfv-app footer a:hover{ text-shadow:0 0 8px var(--sky-3); }
+    #bfv-app .stars{ position:fixed; inset:0; pointer-events:none; z-index:-1 }
+    #bfv-app .stars::before,#bfv-app .stars::after{ content:""; position:absolute; inset:0 }
+    #bfv-app .stars::before{ background:radial-gradient(ellipse at top, rgba(110,160,255,.18), transparent 60%), radial-gradient(ellipse at bottom, rgba(40,70,160,.12), transparent 60%) }
+    #bfv-app .stars::after{ opacity:.3; animation:pulse 6s ease-in-out infinite; background-image:radial-gradient(2px 2px at 20% 30%, #86b1ff 0, transparent 40%), radial-gradient(1px 1px at 70% 60%, #8ec5ff 0, transparent 30%), radial-gradient(1.5px 1.5px at 40% 80%, #9ad1ff 0, transparent 40%) }
+    @keyframes pulse{0%,100%{opacity:.25}50%{opacity:.4}}
+    #bfv-app .small{ font-size:12px; color:var(--muted) }
 
-/* Print layout */
-#bfv-app .print-area{ display:none }
-@media print{
-  body, #bfv-app{ background:#fff !important; color:#000 !important }
-  #bfv-app .bfv-wrap, #bfv-app .panel, #bfv-app .grid{ all:unset }
-  #bfv-app .stars, #bfv-app header, #bfv-app .grid, #bfv-app footer{ display:none !important }
-  #bfv-app .print-area{ display:block !important; padding:12mm }
-  #bfv-app .print-title{ font-size:20pt; font-weight:800; margin:0 0 4mm }
-  #bfv-app .print-sub{ font-size:12pt; margin:0 0 6mm }
-  #bfv-app table{ width:100%; border-collapse:collapse; font-size:11pt }
-  #bfv-app th, #bfv-app td{ border:1px solid #000; padding:6px 8px; text-align:left }
-  #bfv-app th{ background:#f0f0f0 }
-  #bfv-app tfoot td{ font-weight:700; background:#fafafa }
-  #bfv-app .print-footer{ margin-top:8mm; font-size:10pt; color:#000; text-align:right }
-  @page{ margin:12mm }
-}
-</style>
+    /* Print layout */
+    #bfv-app .print-area{ display:none }
+    @media print{
+      body, #bfv-app{ background:#fff !important; color:#000 !important }
+      #bfv-app .bfv-wrap, #bfv-app .panel, #bfv-app .grid{ all:unset }
+      #bfv-app .stars, #bfv-app header, #bfv-app .grid, #bfv-app footer{ display:none !important }
+      #bfv-app .print-area{ display:block !important; padding:12mm }
+      #bfv-app .print-title{ font-size:20pt; font-weight:800; margin:0 0 4mm }
+      #bfv-app .print-sub{ font-size:12pt; margin:0 0 6mm }
+      #bfv-app table{ width:100%; border-collapse:collapse; font-size:11pt }
+      #bfv-app th, #bfv-app td{ border:1px solid #000; padding:6px 8px; text-align:left }
+      #bfv-app th{ background:#f0f0f0 }
+      #bfv-app tfoot td{ font-weight:700; background:#fafafa }
+      #bfv-app .print-footer{ margin-top:8mm; font-size:10pt; color:#000; text-align:right }
+      @page{ margin:12mm }
+    }
+  </style>
 </head>
 <body>
-<div id="bfv-app">
-  <!-- header, panels, fleet name input, catalog, drones, mines, etc. remain unchanged -->
+  <div id="bfv-app">
+    <div class="bfv-wrap">
+      <header>
+        <h1>Space Combat – Fleet Builder</h1>
+        <div class="bfv-sub">Build your fleet with ships, drone groups, and mine packs. Points auto-sum as you go.</div>
 
-  <!-- PRINT AREA -->
-  <div class="print-area" aria-hidden="true">
-    <div class="print-title">Starship Fleet Builder</div>
-    <div class="print-sub" id="print-subtitle"></div>
-    <table id="print-table">
-      <thead>
-        <tr><th>#</th><th>Name</th><th>Qty</th><th>Row Points</th></tr>
-      </thead>
-      <tbody></tbody>
-      <tfoot>
-        <tr>
-          <td>Total</td><td></td>
-          <td id="print-total-count">0</td>
-          <td id="print-total-points">0 points</td>
-        </tr>
-      </tfoot>
-    </table>
-    <div class="print-footer" id="print-footer"></div>
+        <!-- Fleet name input -->
+        <div class="panel" style="margin-bottom:16px">
+          <label for="fleet-name" class="sub" style="display:block; margin-bottom:6px">Fleet Name</label>
+          <input id="fleet-name" class="text" placeholder="e.g., Patrol Group Sigma" />
+        </div>
+      </header>
+
+      <div class="grid">
+        <!-- Catalog -->
+        <section class="panel">
+          <div class="row" style="margin-bottom:8px">
+            <h2>Ship Catalog</h2>
+            <div class="spacer"></div>
+            <div class="row" role="group" aria-label="Faction filter">
+              <button class="pill" data-faction="All" aria-pressed="true">All</button>
+              <button class="pill" data-faction="Humanoid">Humanoid</button>
+              <button class="pill" data-faction="Alien">Alien</button>
+            </div>
+          </div>
+          <input class="search" id="search" placeholder="Search ships… (e.g., Cruiser, S-4A)" />
+          <ul class="list" id="catalog-list" aria-live="polite"></ul>
+        </section>
+
+        <!-- Drones -->
+        <section class="panel">
+          <h2>Drones</h2>
+          <div class="list">
+            <div class="item">
+              <div><div class="name">Drone A</div><div class="sub">5 pts each</div></div>
+              <div class="row">
+                <div class="stepper" data-stepper="drone-a">
+                  <button>−</button><input type="number" value="0" min="0" max="200" /><button>+</button>
+                </div>
+                <button class="btn" data-add-drone="A">Add</button>
+              </div>
+            </div>
+            <div class="item">
+              <div><div class="name">Drone B</div><div class="sub">10 pts each</div></div>
+              <div class="row">
+                <div class="stepper" data-stepper="drone-b">
+                  <button>−</button><input type="number" value="0" min="0" max="200" /><button>+</button>
+                </div>
+                <button class="btn" data-add-drone="B">Add</button>
+              </div>
+            </div>
+            <div class="item">
+              <div><div class="name">Drone C</div><div class="sub">15 pts each</div></div>
+              <div class="row">
+                <div class="stepper" data-stepper="drone-c">
+                  <button>−</button><input type="number" value="0" min="0" max="200" /><button>+</button>
+                </div>
+                <button class="btn" data-add-drone="C">Add</button>
+              </div>
+            </div>
+          </div>
+          <div class="small" style="margin-top:6px">Tip: Add drones in groups (e.g., 6× Drone B) and adjust in your Fleet list.</div>
+        </section>
+
+        <!-- Mines + Fleet -->
+        <section class="panel">
+          <div class="row" style="margin-bottom:8px">
+            <h2>Your Fleet</h2>
+            <div class="spacer"></div>
+            <label class="btn grey" style="position:relative; overflow:hidden">
+              Import
+              <input type="file" id="import" accept="application/json" style="position:absolute; inset:0; opacity:0; cursor:pointer" />
+            </label>
+            <button class="btn" id="export">Export</button>
+            <button class="btn grey" id="export-csv">Export CSV</button>
+            <button class="btn grey" id="print">Print</button>
+            <button class="btn grey" id="clear">Clear</button>
+          </div>
+          <div class="item" style="margin-bottom:10px">
+            <div><div class="name">Mines</div><div class="sub">4 mines per pack • 5 pts per pack</div></div>
+            <div class="row">
+              <div class="stepper" data-stepper="mines">
+                <button>−</button><input type="number" value="0" min="0" max="200" /><button>+</button>
+              </div>
+              <button class="btn" id="add-mines">Add Packs</button>
+            </div>
+          </div>
+          <ul class="list" id="fleet-list" aria-live="polite"></ul>
+          <div class="fleet-total">
+            <div class="small">Drag-select to copy. Exports include quantities and points.</div>
+            <div class="total" id="total">Total: 0 pts</div>
+          </div>
+        </section>
+      </div>
+
+      <footer>Built by <a href="https://cerkit.com" target="_blank">cerkit.com</a></footer>
+    </div>
+
+    <!-- PRINT AREA (shown only when printing) -->
+    <div class="print-area" aria-hidden="true">
+      <div class="print-title">Starship Fleet Builder</div>
+      <div class="print-sub" id="print-subtitle"></div>
+      <table id="print-table">
+        <thead>
+          <tr>
+            <th style="width:70px">#</th>
+            <th>Name</th>
+            <th style="width:90px">Qty</th>
+            <th style="width:140px">Row Points</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+        <tfoot>
+          <tr>
+            <td>Total</td>
+            <td></td>
+            <td id="print-total-count">0</td>
+            <td id="print-total-points">0 points</td>
+          </tr>
+        </tfoot>
+      </table>
+      <div class="print-footer" id="print-footer"></div>
+    </div>
+
+    <div class="stars"></div>
   </div>
-</div>
 
-<script>
-(function(){
-  const SHIPS = [
-    { id:"humanoid-s4a-scout", faction:"Humanoid", code:"S-4A", name:"Scout", points:115 },
-    { id:"humanoid-c6a-cruiser", faction:"Humanoid", code:"C-6A", name:"Heavy Cruiser", points:280 },
-    { id:"humanoid-d3a-destroyer", faction:"Humanoid", code:"D-3A", name:"Destroyer", points:190 },
-    { id:"humanoid-t2a-transport", faction:"Humanoid", code:"T-2A", name:"Transport", points:80 },
-    { id:"alien-s3a-scout", faction:"Alien", code:"S-3A", name:"Scout", points:120 },
-    { id:"alien-c3a-cruiser", faction:"Alien", code:"C-3A", name:"Heavy Cruiser", points:290 },
-    { id:"alien-d2a-destroyer", faction:"Alien", code:"D-2A", name:"Destroyer", points:195 },
-    { id:"alien-t1a-transport", faction:"Alien", code:"T-1A", name:"Transport", points:80 }
-  ];
-  const DRONE_POINTS = { A:5, B:10, C:15 };
-  const MINES_PER_PACK = 4, MINE_PACK_POINTS=5;
+  <script>
+  (function(){
+    const app = document.getElementById('bfv-app'); // critical for all scoped queries
 
-  const $=(sel,root=document)=>root.querySelector(sel);
-  const $$=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
-  const state={ faction:'All', name:'', fleet:[] };
+    const SHIPS = [
+      // Humanoid
+      { id: "humanoid-s4a-scout", faction: "Humanoid", code: "S-4A", name: "Scout", points: 115 },
+      { id: "humanoid-c6a-cruiser", faction: "Humanoid", code: "C-6A", name: "Heavy Cruiser", points: 280 },
+      { id: "humanoid-d3a-destroyer", faction: "Humanoid", code: "D-3A", name: "Destroyer", points: 190 },
+      { id: "humanoid-t2a-transport", faction: "Humanoid", code: "T-2A", name: "Transport", points: 80 },
 
-  /* --- wireEvents, renderCatalog, renderFleet, addShipById, addDrones, addMinePacksSafe remain unchanged except below fixes --- */
+      // Alien
+      { id: "alien-s3a-scout", faction: "Alien", code: "S-3A", name: "Scout", points: 120 },
+      { id: "alien-c3a-cruiser", faction: "Alien", code: "C-3A", name: "Heavy Cruiser", points: 290 },
+      { id: "alien-d2a-destroyer", faction: "Alien", code: "D-2A", name: "Destroyer", points: 195 },
+      { id: "alien-t1a-transport", faction: "Alien", code: "T-1A", name: "Transport", points: 80 }
+    ];
+    const DRONE_POINTS = { A: 5, B: 10, C: 15 };
+    const MINES_PER_PACK = 4;
+    const MINE_PACK_POINTS = 5;
 
-  // CSV Export
-  $('#export-csv', app).addEventListener('click', ()=>{
-    const rows=[['#','Name','Qty','Row Points']];
-    let totalPoints=0, totalQty=0;
-    state.fleet.forEach((it,idx)=>{
-      const qty=it.qty||1, rowPts=qty*(it.pointsEach||0);
-      totalPoints+=rowPts; totalQty+=qty;
-      rows.push([`Ship ${idx+1}`, it.label, qty, `${rowPts} points`]);
-    });
-    rows.push(['Total','',totalQty,`${totalPoints} points`]);
-    const csv=rows.map(r=>r.join(',')).join('\r\n');
-    const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(blob);
-    a.download='fleet.csv'; a.click();
-  });
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+    const state = {
+      faction: load('bfv_faction', 'All'),
+      query: '',
+      name: load('bfv_name', ''),
+      fleet: load('bfv_fleet', []),   // [{type,id,label,qty,pointsEach}]
+    };
+    function save(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch{} }
+    function load(k,f){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : f; }catch{ return f; } }
 
-  function buildPrintView(){
-    $('#print-subtitle').textContent=state.name||'';
-    const tbody=$('#print-table tbody'); tbody.innerHTML='';
-    let totalPoints=0, totalQty=0;
-    state.fleet.forEach((item,idx)=>{
-      const qty=item.qty||1, rowPts=qty*(item.pointsEach||0);
-      totalPoints+=rowPts; totalQty+=qty;
-      const tr=document.createElement('tr');
-      tr.innerHTML=`<td>Ship ${idx+1}</td><td>${item.label}</td><td>${qty}</td><td>${rowPts} points</td>`;
-      tbody.appendChild(tr);
-    });
-    $('#print-total-count').textContent=totalQty;
-    $('#print-total-points').textContent=`${totalPoints} points`;
-    $('#print-footer').textContent=`Printed on ${new Date().toLocaleString()} — cerkit.com`;
-  }
-})();
-</script>
+    const catalogList = $('#catalog-list', app);
+    const search = $('#search', app);
+    const fleetList = $('#fleet-list', app);
+    const total = $('#total', app);
+    const nameInput = $('#fleet-name', app);
+
+    document.addEventListener('DOMContentLoaded', init);
+
+    function init(){
+      // Restore UI state
+      nameInput.value = state.name || '';
+      $$('.pill', app).forEach(p => p.setAttribute('aria-pressed', String(p.dataset.faction === state.faction)));
+
+      wireEvents();
+      renderCatalog();
+      renderFleet();
+    }
+
+    function wireEvents(){
+      // helpers
+      function debounce(fn, ms){ let t; return (...a)=>{ clearTimeout(t); t = setTimeout(()=>fn(...a), ms); }; }
+      function csvEscape(val){ const s=String(val ?? ''); return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s; }
+      function slugifyName(raw){
+        const base = raw && raw.trim() !== "" ? raw : "unnamed-fleet";
+        return (base.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || "unnamed-fleet");
+      }
+
+      // Fleet name
+      nameInput.addEventListener('input', () => {
+        state.name = nameInput.value; save('bfv_name', state.name);
+      });
+
+      // Faction pills
+      $$('.pill', app).forEach(btn => btn.addEventListener('click', () => {
+        state.faction = btn.dataset.faction;
+        $$('.pill', app).forEach(p => p.setAttribute('aria-pressed', String(p === btn)));
+        save('bfv_faction', state.faction);
+        renderCatalog();
+      }));
+
+      // Search
+      search.addEventListener('keydown', (e)=>{
+        if(e.key==='Enter'){
+          const firstBtn = catalogList.querySelector('[data-add-ship]');
+          if(firstBtn) firstBtn.focus();
+        }
+      });
+      search.addEventListener('input', debounce(()=>{ state.query = search.value; renderCatalog(); }, 120));
+
+      // Catalog click
+      catalogList.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-add-ship]');
+        if (!btn) return;
+        addShipById(btn.getAttribute('data-add-ship'));
+      });
+
+      // Steppers
+      function wireStepper(rootSel){
+        const root = app.querySelector(`[data-stepper="${rootSel}"]`);
+        if (!root) return () => 0;
+        const input = root.querySelector('input');
+        root.addEventListener('click', (e)=>{
+          if (e.target.tagName !== 'BUTTON') return;
+          const inc = e.target.textContent.trim() === '+' ? 1 : -1;
+          input.value = String(Math.max(Number(input.min||0), Math.min(Number(input.max||999), Number(input.value||0)+inc)));
+        });
+        return () => Number(input.value||0);
+      }
+      const getA = wireStepper('drone-a');
+      const getB = wireStepper('drone-b');
+      const getC = wireStepper('drone-c');
+      const getM = wireStepper('mines');
+
+      // Drone add buttons
+      $$('[data-add-drone]', app).forEach(btn => btn.addEventListener('click', () => {
+        const kind = btn.getAttribute('data-add-drone');
+        const count = kind==='A'? getA() : kind==='B'? getB() : getC();
+        addDrones(kind, count);
+      }));
+
+      // Mines add
+      $('#add-mines', app).addEventListener('click', () => addMinePacksSafe(getM()));
+
+      // Fleet interactions
+      fleetList.addEventListener('click', (e) => {
+        const rm = e.target.closest('[data-remove-index]');
+        if (rm){ state.fleet.splice(Number(rm.getAttribute('data-remove-index')),1); renderFleet(); return; }
+        const step = e.target.closest('[data-stepper-index]');
+        if (!step) return;
+        const i = Number(step.getAttribute('data-stepper-index'));
+        const input = step.querySelector('input');
+        if (e.target.tagName === 'BUTTON'){
+          const inc = e.target.textContent.trim() === '+' ? 1 : -1;
+          input.value = String(Math.max(0, Math.min(500, Number(input.value||0)+inc)));
+          if (Number(input.value) <= 0){ state.fleet.splice(i,1); } else { state.fleet[i].qty = Number(input.value); }
+          renderFleet();
+        }
+      });
+      fleetList.addEventListener('change', (e) => {
+        const step = e.target.closest('[data-stepper-index]');
+        if (!step) return;
+        const i = Number(step.getAttribute('data-stepper-index'));
+        const input = step.querySelector('input');
+        const v = Math.max(0, Math.min(500, Number(input.value||0)));
+        if (v <= 0){ state.fleet.splice(i,1); } else { state.fleet[i].qty = v; }
+        renderFleet();
+      });
+
+      // Export JSON (filename = slug of fleet name)
+      $('#export', app).addEventListener('click', () => {
+        const payload = { name: state.name || "", fleet: state.fleet, meta: { exportedAt: new Date().toISOString(), app: 'cerkit.com Space Fleet Builder' } };
+        const filename = `${slugifyName(state.name)}.json`;
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      // Export CSV (Total = sum of quantities)
+      $('#export-csv', app).addEventListener('click', () => {
+        const rows = [];
+        rows.push(['#', 'Name', 'Qty', 'Row Points']);
+
+        let totalPoints = 0;
+        let totalQty = 0;
+
+        state.fleet.forEach((item, idx) => {
+          const qty = item.qty || 1;
+          const rowPts = qty * (item.pointsEach || 0);
+          totalPoints += rowPts;
+          totalQty += qty;
+
+          let name = item.label;
+          if (item.type === 'mines') {
+            name = `Mines (${MINES_PER_PACK} per pack) — ${qty * MINES_PER_PACK} total`;
+          }
+
+          rows.push([`Ship ${idx+1}`, name, String(qty), `${rowPts} points`]);
+        });
+
+        rows.push(['Total', '', String(totalQty), `${totalPoints} points`]);
+
+        const csv = rows.map(r => r.map(csvEscape).join(',')).join('\r\n');
+        const filename = `${slugifyName(state.name)}.csv`;
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      // Print
+      $('#print', app).addEventListener('click', () => {
+        buildPrintView();
+        window.print();
+      });
+
+      // Import (normalize old names, restore name; tolerate legacy fields)
+      $('#import', app).addEventListener('change', (e) => {
+        const f = e.target.files && e.target.files[0];
+        if (!f) return;
+        const rr = new FileReader();
+        rr.onload = () => {
+          try {
+            const data = JSON.parse(rr.result);
+
+            const mapName = (s) =>
+              typeof s === 'string'
+                ? s.replace(/\bTerran\b/g, 'Humanoid').replace(/\bKurgun\b/g, 'Alien')
+                : s;
+
+            const fixItem = (it) => {
+              const out = { ...it };
+
+              out.label = mapName(out.label);
+              if (out.faction) out.faction = mapName(out.faction);
+              if (typeof out.id === 'string') {
+                out.id = out.id.replace(/^terran-/i, 'humanoid-').replace(/^kurgun-/i, 'alien-');
+              }
+              if (typeof out.pointsEach !== 'number' && typeof out.points === 'number') {
+                out.pointsEach = out.points; delete out.points;
+              }
+              if (typeof out.qty !== 'number') {
+                if (typeof out.quantity === 'number') out.qty = out.quantity;
+              }
+              if (typeof out.qty !== 'number') out.qty = 1;
+              if (!out.type) out.type = 'ship';
+              if (!out.label && out.id) out.label = out.id;
+              return out;
+            };
+
+            const incoming = Array.isArray(data.fleet) ? data.fleet
+                              : Array.isArray(data) ? data
+                              : [];
+            state.fleet = incoming.map(fixItem);
+
+            if (typeof data.name === 'string') {
+              state.name = data.name; nameInput.value = state.name; save('bfv_name', state.name);
+            }
+
+            renderFleet();
+          } catch (err) {
+            alert('Invalid fleet file.');
+            console.error(err);
+          }
+        };
+        rr.readAsText(f);
+        e.target.value = '';
+      });
+
+      // Clear
+      $('#clear', app).addEventListener('click', () => { state.fleet = []; renderFleet(); });
+    }
+
+    // -------- Rendering --------
+    function renderCatalog(){
+      const q = state.query.trim().toLowerCase();
+      let rows = SHIPS.filter(s => state.faction === 'All' || s.faction === state.faction);
+      if (q) rows = rows.filter(s => (`${s.faction} ${s.code} ${s.name}`).toLowerCase().includes(q));
+
+      catalogList.innerHTML = '';
+      rows.forEach(s => {
+        const li = document.createElement('li');
+        li.className = 'item';
+        li.innerHTML = `
+          <div>
+            <div class="name">${s.faction} ${s.code} <span style="color:#c8cbd2;font-weight:600">${s.name}</span></div>
+            <div class="sub">${s.points} pts</div>
+          </div>
+          <button class="btn" data-add-ship="${s.id}">Add to Fleet</button>
+        `;
+        catalogList.appendChild(li);
+      });
+    }
+
+    function fleetPoints(){ return state.fleet.reduce((sum,i)=> sum + i.pointsEach * (i.qty||1), 0); }
+
+    function renderFleet(){
+      fleetList.innerHTML = '';
+      if (!state.fleet.length){
+        const empty = document.createElement('div');
+        empty.className = 'sub';
+        empty.textContent = 'No items yet. Add ships, drones, or mines to begin.';
+        fleetList.appendChild(empty);
+      } else {
+        state.fleet.forEach((it, idx) => {
+          const li = document.createElement('li');
+          li.className = 'item';
+          const per = it.pointsEach;
+          const qty = it.qty || 1;
+          const sum = per * qty;
+
+          let name = it.label;
+          if (it.type === 'mines') {
+            name = `Mines (${MINES_PER_PACK} per pack) — ${qty * MINES_PER_PACK} total`;
+          }
+
+          li.innerHTML = `
+            <div>
+              <div class="name">${escapeHtml(name)}</div>
+              <div class="sub">${it.type}</div>
+            </div>
+            <div class="row">
+              <div class="sub" style="margin-right:6px"><strong style="color:#d7dee7">${per}</strong> pts each</div>
+              <div class="stepper" data-stepper-index="${idx}">
+                <button aria-label="decrease">−</button>
+                <input type="number" value="${qty}" min="0" max="500" />
+                <button aria-label="increase">+</button>
+              </div>
+              <div class="sub" style="width:120px; text-align:right; font-weight:700; color:#bfe0ff;">${sum} pts</div>
+              <button class="btn grey" data-remove-index="${idx}">Remove</button>
+            </div>
+          `;
+          fleetList.appendChild(li);
+        });
+      }
+      total.textContent = `Total: ${fleetPoints()} pts`;
+      save('bfv_fleet', state.fleet);
+    }
+
+    function escapeHtml(s){ return (s+"").replace(/[&<>\"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+    // -------- Actions --------
+    function addShipById(id){
+      const ship = SHIPS.find(s => s.id === id);
+      if (!ship) return;
+      const idx = state.fleet.findIndex(i => i.type==='ship' && i.id===ship.id);
+      if (idx >= 0) { state.fleet[idx].qty = (state.fleet[idx].qty||1) + 1; }
+      else state.fleet.push({ type:'ship', id: ship.id, label: `${ship.faction} ${ship.code} ${ship.name}`, qty: 1, pointsEach: ship.points });
+      renderFleet();
+    }
+
+    function addDrones(kind, count){
+      count = Math.max(0, Number(count||0));
+      if (!count) return;
+      const label = `Drone ${kind}`;
+      const pointsEach = DRONE_POINTS[kind];
+      const idx = state.fleet.findIndex(i => i.type==='drone' && i.label===label);
+      if (idx >= 0) {
+        state.fleet[idx].qty = (state.fleet[idx].qty||0) + count;
+      } else {
+        state.fleet.push({ type:'drone', id:`drone-${kind}`, label, qty: count, pointsEach });
+      }
+      renderFleet();
+    }
+
+    function addMinePacksSafe(packs){
+      packs = Math.max(0, Number(packs||0));
+      if (!packs) return;
+      const label = `Mines (${MINES_PER_PACK} per pack)`;
+      const pointsEach = MINE_PACK_POINTS; // per pack
+      const idx = state.fleet.findIndex(i => i.type==='mines');
+      if (idx >= 0) {
+        state.fleet[idx].qty = (state.fleet[idx].qty||0) + packs;
+      } else {
+        state.fleet.push({ type:'mines', id:`mines`, label, qty: packs, pointsEach });
+      }
+      renderFleet();
+    }
+
+    // -------- Print Builder --------
+    function buildPrintView(){
+      // Subtitle: fleet name (or blank)
+      const printSubtitle = document.getElementById('print-subtitle');
+      printSubtitle.textContent = state.name ? state.name : '';
+
+      // Table rows
+      const tbody = document.querySelector('#print-table tbody');
+      tbody.innerHTML = '';
+      let totalPoints = 0;
+      let totalQty = 0;
+
+      state.fleet.forEach((item, idx) => {
+        const qty = item.qty || 1;
+        const rowPoints = qty * (item.pointsEach || 0);
+        totalPoints += rowPoints;
+        totalQty += qty;
+
+        let name = item.label;
+        if (item.type === 'mines') {
+          name = `Mines (${MINES_PER_PACK} per pack) — ${qty * MINES_PER_PACK} total`;
+        }
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>Ship ${idx + 1}</td>
+          <td>${escapeHtml(name)}</td>
+          <td>${qty}</td>
+          <td>${rowPoints} points</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Totals (sum of quantities)
+      document.getElementById('print-total-count').textContent = String(totalQty);
+      document.getElementById('print-total-points').textContent = `${totalPoints} points`;
+
+      // Footer: Date/Time and cerkit.com
+      const pf = document.getElementById('print-footer');
+      const when = new Date().toLocaleString();
+      pf.textContent = `Printed on ${when} — cerkit.com`;
+    }
+  })();
+  </script>
 </body>
 </html>
-
