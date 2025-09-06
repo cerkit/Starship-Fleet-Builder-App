@@ -9,6 +9,6 @@ I decided to make it a single `.html` file so that it would be easy to integrate
 Because it's a single file, it also runs locally in Safari and Edge.
 
 ## Call for help
-If you have any new ideas on how to make this app better, please feel free to submit pull requests.
+If you have any new ideas on how to make this app better, please feel free to submit pull requests or open a new issue ticket with your bug/feature request.
 
 ### You can reach me at <a href="mailto:fleet-builder@cerkit.com">fleet-builder@cerkit.com</a>
