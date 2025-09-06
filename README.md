@@ -8,6 +8,8 @@ to be able to print the fleet list so I could easily build it at the gaming tabl
 I decided to make it a single `.html` file so that it would be easy to integrate with my blog (Astro blog engine). 
 Because it's a single file, it also runs locally in Safari and Edge.
 
+[Space Combat - Fleet Builder User Guide on cerkit.com](https://cerkit.com/fleet-builder-guide/)
+
 ## Call for help
 If you have any new ideas on how to make this app better, please feel free to submit pull requests or open a new issue ticket with your bug/feature request.
 
