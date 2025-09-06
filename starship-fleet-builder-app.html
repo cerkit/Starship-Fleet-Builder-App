@@ -21,6 +21,18 @@
       --amber-2: #ffd062;
       --danger: #d24b4b;
     }
+  
+    .sr-only{
+      position:absolute;
+      width:1px;
+      height:1px;
+      padding:0;
+      margin:-1px;
+      overflow:hidden;
+      clip:rect(0,0,0,0);
+      white-space:nowrap;
+      border:0
+    }
 
     #bfv-app * {
       box-sizing: border-box
@@ -391,6 +403,8 @@
               <button class="pill" data-faction="Alien">Alien</button>
             </div>
           </div>
+          <!-- Labels -->
+          <label for="search" class="sr-only">Search ships</label>
           <input class="search" id="search" placeholder="Search ships… (e.g., Cruiser, S-4A)" />
           <ul class="list" id="catalog-list" aria-live="polite"></ul>
         </section>
@@ -470,7 +484,7 @@
           <ul class="list" id="fleet-list" aria-live="polite"></ul>
           <div class="fleet-total">
             <div class="small">Drag-select to copy. Exports include quantities and points.</div>
-            <div class="total" id="total">Total: 0 pts</div>
+            <div class="total" id="total" aria-live="polite">Total: 0 pts</div>
           </div>
         </section>
       </div>
@@ -730,8 +744,8 @@
             rows.push([`Ship ${idx + 1}`, item.label, String(qty), `${rowPts} points`]);
           });
 
-          // count of rows (not sum of qty) to match the print layout you asked for
-          rows.push(['Total', '', String(state.fleet.length), `${totalPoints} points`]);
+          // In CSV export, replace the last push():
+          rows.push(['Total', '', `${state.fleet.length} rows (${state.fleet.reduce((n,i)=>n+(i.qty||1),0)} units)`, `${totalPoints} points`]);
 
           const csv = rows.map(r => r.map(csvEscape).join(',')).join('\r\n');
           const filename = `${slugifyName(state.name || '')}.csv`;
@@ -863,7 +877,24 @@
         state.fleet.forEach((item, idx) => {
           const rowPoints = (item.qty || 1) * (item.pointsEach || 0);
           totalPoints += rowPoints;
+          
+          let name = item.label;
+          if (item.type === 'mines') {
+            const packs = item.qty || 1;
+            name = `Mines (4 per pack) — ${packs*4} total`;
+          }
+          tr.innerHTML = `
+            <td>Ship ${idx + 1}</td>  
+            <td>${escapeHtml(name)}</td>
+            <td>${item.qty || 1}</td>
+            <td>${rowPoints} points</td>
+          `;
 
+
+          // In buildPrintView(), after computing totalPoints:
+          const qtySum = state.fleet.reduce((n,i)=> n + (i.qty||1), 0);
+          document.getElementById('print-total-count').textContent =
+            `${state.fleet.length} rows (${qtySum} units)`;
           const tr = document.createElement('tr');
           tr.innerHTML = `
           <td>Ship ${idx + 1}</td>
