@@ -20,4 +20,4 @@ If you have any new ideas on how to make this app better, please feel free to su
 This repository is covered by the [CC-BY-NC-SA License](https://github.com/cerkit/Starship-Fleet-Builder-App/blob/main/LICENSE).
 
 **Commercial use is forbidden due to trademark issues of a third-party**
-If you choose to use or modify this software, you **must** give attribution and use the same license (Share-alike) in your modified version.
+If you choose to use or modify this software, you **must** give attribution ([Space Combat - Fleet Builder on GitHub](https://github.com/cerkit/Starship-Fleet-Builder-App)) and use the same license (Share-alike) in your modified version.
