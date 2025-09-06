@@ -12,3 +12,10 @@ Because it's a single file, it also runs locally in Safari and Edge.
 If you have any new ideas on how to make this app better, please feel free to submit pull requests or open a new issue ticket with your bug/feature request.
 
 ### You can reach me at <a href="mailto:fleet-builder@cerkit.com">fleet-builder@cerkit.com</a>
+
+# Important notice about license
+
+This repository is covered by the [CC-BY-NC-SA License](https://github.com/cerkit/Starship-Fleet-Builder-App/blob/main/LICENSE).
+
+**Commercial use is forbidden due to trademark issues of a third-party**
+If you choose to use or modify this software, you **must** give attribution and use the same license (Share-alike) in your modified version.
